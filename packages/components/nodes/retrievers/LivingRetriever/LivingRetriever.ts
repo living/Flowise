@@ -1,6 +1,6 @@
 import { ICommonObject, INode, INodeData, INodeOutputsValue, INodeParams } from '../../../src/Interface'
 import { handleEscapeCharacters } from '../../../src'
-import { BaseRetriever } from '@langchain/core/retrievers'
+import { VectorStore } from '@langchain/core/vectorstores'
 
 const defaultPrompt = `{question}`
 
@@ -19,7 +19,7 @@ class LivingRetriever_Retrievers implements INode {
     constructor() {
         this.label = 'Living Retriever'
         this.name = 'livingRetriever'
-        this.version = 1.1
+        this.version = 1.2
         this.type = 'LivingRetriever'
         this.icon = 'LivingRetriever.svg'
         this.category = 'Retrievers'
@@ -28,9 +28,9 @@ class LivingRetriever_Retrievers implements INode {
 
         this.inputs = [
             {
-                label: 'Vector Store Retriever',
-                name: 'baseRetriever',
-                type: 'VectorStoreRetriever'
+                label: 'Vector Store',
+                name: 'vectorStore',
+                type: 'VectorStore'
             },
             {
                 label: 'Prompt',
@@ -62,6 +62,15 @@ class LivingRetriever_Retrievers implements INode {
                 optional: true,
                 acceptVariable: true,
                 list: true
+            },
+            {
+                label: 'Top K',
+                name: 'topK',
+                description: 'Number of top results to fetch. Default to 4',
+                placeholder: '4',
+                type: 'number',
+                additionalParams: true,
+                optional: true
             }
         ]
         this.outputs = [
@@ -99,9 +108,10 @@ class LivingRetriever_Retrievers implements INode {
     }
 
     async init(nodeData: INodeData, input: string, options: ICommonObject): Promise<any> {
-        const baseRetriever = nodeData.inputs?.baseRetriever as BaseRetriever
+        const vectorStore = nodeData.inputs?.vectorStore as VectorStore
         const output = nodeData.outputs?.output as string
         const promptValuesStr = nodeData.inputs?.promptValues
+        const topK = nodeData.inputs?.topK ?? 4
         let modelPrompt = (nodeData.inputs?.modelPrompt ?? '{question}') as string
         const metadataFilterStr = nodeData.inputs?.metadataFilter
         const metaPromptStr = nodeData.inputs?.metaPrompt
@@ -138,14 +148,15 @@ class LivingRetriever_Retrievers implements INode {
         }
 
         if (output === 'document') {
-            const docs = await baseRetriever.getRelevantDocuments(modelPrompt, {
+            const docs = await vectorStore.similaritySearch(modelPrompt, topK, {
                 metadata: metadataFilter
             })
+
             return docs
         } else if (output === 'text') {
             let finaltext = ''
 
-            const docs = await baseRetriever.getRelevantDocuments(modelPrompt, {
+            const docs = await vectorStore.similaritySearch(modelPrompt, topK, {
                 metadata: metadataFilter
             })
 
