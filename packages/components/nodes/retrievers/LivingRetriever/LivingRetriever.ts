@@ -19,7 +19,7 @@ class LivingRetriever_Retrievers implements INode {
     constructor() {
         this.label = 'Living Retriever'
         this.name = 'livingRetriever'
-        this.version = 1.2
+        this.version = 1.3
         this.type = 'LivingRetriever'
         this.icon = 'LivingRetriever.svg'
         this.category = 'Retrievers'
@@ -96,7 +96,7 @@ class LivingRetriever_Retrievers implements INode {
                 try {
                     value = JSON.parse(`${value}`)
                 } catch (e) {
-                    console.error(e)
+                    let error = e
                 }
                 meta[prop] = value
             } else {
@@ -111,7 +111,7 @@ class LivingRetriever_Retrievers implements INode {
         const vectorStore = nodeData.inputs?.vectorStore as VectorStore
         const output = nodeData.outputs?.output as string
         const promptValuesStr = nodeData.inputs?.promptValues
-        const topK = nodeData.inputs?.topK ?? 4
+        const topK = parseInt(nodeData.inputs?.topK ? nodeData.inputs?.topK : 4)
         let modelPrompt = (nodeData.inputs?.modelPrompt ?? '{question}') as string
         const metadataFilterStr = nodeData.inputs?.metadataFilter
         const metaPromptStr = nodeData.inputs?.metaPrompt
@@ -141,24 +141,20 @@ class LivingRetriever_Retrievers implements INode {
         if (metaPromptStr) {
             try {
                 let metaPrompt = typeof metaPromptStr === 'object' ? metaPromptStr : eval(`(${metaPromptStr})`)
-                metadataFilter = this.metaConfig(metadataFilter, metaPrompt)
+                metadataFilter = JSON.parse(JSON.stringify(this.metaConfig(metadataFilter, metaPrompt)))
             } catch (exception) {
                 throw new Error("Invalid JSON in the LivingRetriver's's metaPrompt: " + exception)
             }
         }
 
         if (output === 'document') {
-            const docs = await vectorStore.similaritySearch(modelPrompt, topK, {
-                metadata: metadataFilter
-            })
+            const docs = await vectorStore.similaritySearch(modelPrompt, topK, metadataFilter)
 
             return docs
         } else if (output === 'text') {
             let finaltext = ''
 
-            const docs = await vectorStore.similaritySearch(modelPrompt, topK, {
-                metadata: metadataFilter
-            })
+            const docs = await vectorStore.similaritySearch(modelPrompt, topK, metadataFilter)
 
             for (const doc of docs) finaltext += `${doc.pageContent}\n`
 
