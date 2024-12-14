@@ -205,6 +205,7 @@ class LivingRetriever_Retrievers implements INode {
         let docs: any[] = []
 
         if (filter.length > 0) {
+            console.info('>>>> Filtrado pelos dados mais atuais >>>>')
             filter
                 .filter((x) => x && typeof x === 'string')
                 .forEach((f) => {
