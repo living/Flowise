@@ -1,11 +1,32 @@
-import { flatten } from 'lodash'
-import { createClient, SearchOptions } from 'redis'
+import { flatten, isEqual } from 'lodash'
+import { createClient, SearchOptions, RedisClientOptions } from 'redis'
 import { Embeddings } from '@langchain/core/embeddings'
 import { RedisVectorStore, RedisVectorStoreConfig } from '@langchain/community/vectorstores/redis'
 import { Document } from '@langchain/core/documents'
 import { ICommonObject, INode, INodeData, INodeOutputsValue, INodeParams, IndexingResult } from '../../../src/Interface'
 import { getBaseClasses, getCredentialData, getCredentialParam } from '../../../src/utils'
-import { escapeSpecialChars, unEscapeSpecialChars } from './utils'
+import { escapeAllStrings, escapeSpecialChars, unEscapeSpecialChars } from './utils'
+
+let redisClientSingleton: ReturnType<typeof createClient>
+let redisClientOption: RedisClientOptions
+
+const getRedisClient = async (option: RedisClientOptions) => {
+    if (!redisClientSingleton) {
+        // if client doesn't exists
+        redisClientSingleton = createClient(option)
+        await redisClientSingleton.connect()
+        redisClientOption = option
+        return redisClientSingleton
+    } else if (redisClientSingleton && !isEqual(option, redisClientOption)) {
+        // if client exists but option changed
+        redisClientSingleton.quit()
+        redisClientSingleton = createClient(option)
+        await redisClientSingleton.connect()
+        redisClientOption = option
+        return redisClientSingleton
+    }
+    return redisClientSingleton
+}
 
 class Redis_VectorStores implements INode {
     label: string
@@ -142,13 +163,13 @@ class Redis_VectorStores implements INode {
             for (let i = 0; i < flattenDocs.length; i += 1) {
                 if (flattenDocs[i] && flattenDocs[i].pageContent) {
                     const document = new Document(flattenDocs[i])
+                    escapeAllStrings(document.metadata)
                     finalDocs.push(document)
                 }
             }
 
             try {
-                const redisClient = createClient({ url: redisUrl })
-                await redisClient.connect()
+                const redisClient = await getRedisClient({ url: redisUrl })
 
                 const storeConfig: RedisVectorStoreConfig = {
                     redisClient: redisClient,
@@ -182,8 +203,6 @@ class Redis_VectorStores implements INode {
                     )
                 }
 
-                await redisClient.quit()
-
                 return { numAdded: finalDocs.length, addedDocs: finalDocs }
             } catch (e) {
                 throw new Error(e)
@@ -212,7 +231,7 @@ class Redis_VectorStores implements INode {
             redisUrl = 'redis://' + username + ':' + password + '@' + host + ':' + portStr
         }
 
-        const redisClient = createClient({ url: redisUrl })
+        const redisClient = await getRedisClient({ url: redisUrl })
 
         const storeConfig: RedisVectorStoreConfig = {
             redisClient: redisClient,
@@ -227,19 +246,7 @@ class Redis_VectorStores implements INode {
 
         // Avoid Illegal invocation error
         vectorStore.similaritySearchVectorWithScore = async (query: number[], k: number, filter?: any) => {
-            await redisClient.connect()
-            const results = await similaritySearchVectorWithScore(
-                query,
-                k,
-                indexName,
-                metadataKey,
-                vectorKey,
-                contentKey,
-                redisClient,
-                filter
-            )
-            await redisClient.quit()
-            return results
+            return await similaritySearchVectorWithScore(query, k, indexName, metadataKey, vectorKey, contentKey, redisClient, filter)
         }
 
         if (output === 'retriever') {

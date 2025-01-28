@@ -14,18 +14,10 @@ import {
     MessageContentImageUrl,
     INodeOutputsValue,
     ISeqAgentNode,
-    IDatabaseEntity,
-    ConversationHistorySelection
+    IDatabaseEntity
 } from '../../../src/Interface'
 import { AgentExecutor } from '../../../src/agents'
-import {
-    extractOutputFromArray,
-    getInputVariables,
-    getVars,
-    handleEscapeCharacters,
-    prepareSandboxVars,
-    transformBracesWithColon
-} from '../../../src/utils'
+import { getInputVariables, getVars, handleEscapeCharacters, prepareSandboxVars } from '../../../src/utils'
 import {
     ExtractTool,
     convertStructuredSchemaToZod,
@@ -33,7 +25,6 @@ import {
     getVM,
     processImageMessage,
     transformObjectPropertyToFunction,
-    filterConversationHistory,
     restructureMessages,
     checkMessageHistory
 } from '../commonUtils'
@@ -97,7 +88,7 @@ const howToUse = `
     |-----------|-----------|
     | user      | john doe  |
 
-2. If you want to use the LLM Node's output as the value to update state, it is available as available as \`$flow.output\` with the following structure:
+2. If you want to use the agent's output as the value to update state, it is available as available as \`$flow.output\` with the following structure:
     \`\`\`json
     {
         "content": 'Hello! How can I assist you today?',
@@ -182,7 +173,7 @@ class LLMNode_SeqAgents implements INode {
     constructor() {
         this.label = 'LLM Node'
         this.name = 'seqLLMNode'
-        this.version = 4.1
+        this.version = 3.0
         this.type = 'LLMNode'
         this.icon = 'llmNode.svg'
         this.category = 'Sequential Agents'
@@ -205,53 +196,6 @@ class LLMNode_SeqAgents implements INode {
                 additionalParams: true
             },
             {
-                label: 'Prepend Messages History',
-                name: 'messageHistory',
-                description:
-                    'Prepend a list of messages between System Prompt and Human Prompt. This is useful when you want to provide few shot examples',
-                type: 'code',
-                hideCodeExecute: true,
-                codeExample: messageHistoryExample,
-                optional: true,
-                additionalParams: true
-            },
-            {
-                label: 'Conversation History',
-                name: 'conversationHistorySelection',
-                type: 'options',
-                options: [
-                    {
-                        label: 'User Question',
-                        name: 'user_question',
-                        description: 'Use the user question from the historical conversation messages as input.'
-                    },
-                    {
-                        label: 'Last Conversation Message',
-                        name: 'last_message',
-                        description: 'Use the last conversation message from the historical conversation messages as input.'
-                    },
-                    {
-                        label: 'All Conversation Messages',
-                        name: 'all_messages',
-                        description: 'Use all conversation messages from the historical conversation messages as input.'
-                    },
-                    {
-                        label: 'Empty',
-                        name: 'empty',
-                        description:
-                            'Do not use any messages from the conversation history. ' +
-                            'Ensure to use either System Prompt, Human Prompt, or Messages History.'
-                    }
-                ],
-                default: 'all_messages',
-                optional: true,
-                description:
-                    'Select which messages from the conversation history to include in the prompt. ' +
-                    'The selected messages will be inserted between the System Prompt (if defined) and ' +
-                    '[Messages History, Human Prompt].',
-                additionalParams: true
-            },
-            {
                 label: 'Human Prompt',
                 name: 'humanMessagePrompt',
                 type: 'string',
@@ -261,11 +205,20 @@ class LLMNode_SeqAgents implements INode {
                 additionalParams: true
             },
             {
-                label: 'Sequential Node',
-                name: 'sequentialNode',
-                type: 'Start | Agent | Condition | LLMNode | ToolNode | CustomFunction | ExecuteFlow',
+                label: 'Messages History',
+                name: 'messageHistory',
                 description:
-                    'Can be connected to one of the following nodes: Start, Agent, Condition, LLM, Tool Node, Custom Function, Execute Flow',
+                    'Return a list of messages between System Prompt and Human Prompt. This is useful when you want to provide few shot examples',
+                type: 'code',
+                hideCodeExecute: true,
+                codeExample: messageHistoryExample,
+                optional: true,
+                additionalParams: true
+            },
+            {
+                label: 'Start | Agent | Condition | LLM | Tool Node',
+                name: 'sequentialNode',
+                type: 'Start | Agent | Condition | LLMNode | ToolNode',
                 list: true
             },
             {
@@ -397,9 +350,7 @@ class LLMNode_SeqAgents implements INode {
         tools = flatten(tools)
 
         let systemPrompt = nodeData.inputs?.systemMessagePrompt as string
-        systemPrompt = transformBracesWithColon(systemPrompt)
         let humanPrompt = nodeData.inputs?.humanMessagePrompt as string
-        humanPrompt = transformBracesWithColon(humanPrompt)
         const llmNodeLabel = nodeData.inputs?.llmNodeName as string
         const sequentialNodes = nodeData.inputs?.sequentialNode as ISeqAgentNode[]
         const model = nodeData.inputs?.model as BaseChatModel
@@ -583,9 +534,6 @@ async function agentNode(
             throw new Error('Aborted!')
         }
 
-        const historySelection = (nodeData.inputs?.conversationHistorySelection || 'all_messages') as ConversationHistorySelection
-        // @ts-ignore
-        state.messages = filterConversationHistory(historySelection, input, state)
         // @ts-ignore
         state.messages = restructureMessages(llm, state)
 
@@ -618,8 +566,6 @@ async function agentNode(
             } else {
                 result.name = name
                 result.additional_kwargs = { ...result.additional_kwargs, nodeId: nodeData.id }
-                let outputContent = typeof result === 'string' ? result : result.content
-                result.content = extractOutputFromArray(outputContent)
                 return {
                     ...returnedOutput,
                     messages: [result]
@@ -640,8 +586,6 @@ async function agentNode(
             } else {
                 result.name = name
                 result.additional_kwargs = { ...result.additional_kwargs, nodeId: nodeData.id }
-                let outputContent = typeof result === 'string' ? result : result.content
-                result.content = extractOutputFromArray(outputContent)
                 return {
                     messages: [result]
                 }

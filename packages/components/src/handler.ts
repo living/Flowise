@@ -6,7 +6,7 @@ import lunary from 'lunary'
 import { RunTree, RunTreeConfig, Client as LangsmithClient } from 'langsmith'
 import { Langfuse, LangfuseTraceClient, LangfuseSpanClient, LangfuseGenerationClient } from 'langfuse'
 
-import { BaseCallbackHandler, NewTokenIndices, HandleLLMNewTokenCallbackFields } from '@langchain/core/callbacks/base'
+import { BaseCallbackHandler } from '@langchain/core/callbacks/base'
 import { LangChainTracer, LangChainTracerFields } from '@langchain/core/tracers/tracer_langchain'
 import { BaseTracer, Run } from '@langchain/core/tracers/base'
 import { ChainValues } from '@langchain/core/utils/types'
@@ -17,8 +17,6 @@ import { getCredentialData, getCredentialParam, getEnvironmentVariable } from '.
 import { ICommonObject, IDatabaseEntity, INodeData, IServerSideEventStreamer } from './Interface'
 import { LangWatch, LangWatchSpan, LangWatchTrace, autoconvertTypedValues } from 'langwatch'
 import { DataSource } from 'typeorm'
-import { ChatGenerationChunk } from '@langchain/core/outputs'
-import { AIMessageChunk } from '@langchain/core/messages'
 
 interface AgentRun extends Run {
     actions: AgentAction[]
@@ -185,14 +183,7 @@ export class CustomChainHandler extends BaseCallbackHandler {
         if (this.skipK > 0) this.skipK -= 1
     }
 
-    handleLLMNewToken(
-        token: string,
-        idx?: NewTokenIndices,
-        runId?: string,
-        parentRunId?: string,
-        tags?: string[],
-        fields?: HandleLLMNewTokenCallbackFields
-    ): void | Promise<void> {
+    handleLLMNewToken(token: string) {
         if (this.skipK === 0) {
             if (!this.isLLMStarted) {
                 this.isLLMStarted = true
@@ -201,16 +192,7 @@ export class CustomChainHandler extends BaseCallbackHandler {
                 }
             }
             if (this.sseStreamer) {
-                if (token) {
-                    const chunk = fields?.chunk as ChatGenerationChunk
-                    const message = chunk?.message as AIMessageChunk
-                    const toolCalls = message?.tool_call_chunks || []
-
-                    // Only stream when token is not empty and not a tool call
-                    if (toolCalls.length === 0) {
-                        this.sseStreamer.streamTokenEvent(this.chatId, token)
-                    }
-                }
+                this.sseStreamer.streamTokenEvent(this.chatId, token)
             }
         }
     }
@@ -261,14 +243,12 @@ class ExtendedLunaryHandler extends LunaryHandler {
     databaseEntities: IDatabaseEntity
     currentRunId: string | null
     thread: any
-    apiMessageId: string
 
     constructor({ flowiseOptions, ...options }: any) {
         super(options)
         this.appDataSource = flowiseOptions.appDataSource
         this.databaseEntities = flowiseOptions.databaseEntities
         this.chatId = flowiseOptions.chatId
-        this.apiMessageId = flowiseOptions.apiMessageId
     }
 
     async initThread() {
@@ -278,18 +258,14 @@ class ExtendedLunaryHandler extends LunaryHandler {
             }
         })
 
-        const userId = entity?.email ?? entity?.id
-
         this.thread = lunary.openThread({
             id: this.chatId,
-            userId,
-            userProps: userId
-                ? {
-                      name: entity?.name ?? undefined,
-                      email: entity?.email ?? undefined,
-                      phone: entity?.phone ?? undefined
-                  }
-                : undefined
+            userId: entity?.email ?? entity?.id,
+            userProps: {
+                name: entity?.name ?? undefined,
+                email: entity?.email ?? undefined,
+                phone: entity?.phone ?? undefined
+            }
         })
     }
 
@@ -300,7 +276,7 @@ class ExtendedLunaryHandler extends LunaryHandler {
                 await this.initThread()
             }
 
-            const messageText = inputs.input || inputs.question
+            const messageText = inputs.input
 
             const messageId = this.thread.trackMessage({
                 content: messageText,
@@ -322,7 +298,6 @@ class ExtendedLunaryHandler extends LunaryHandler {
             const answer = outputs.output
 
             this.thread.trackMessage({
-                id: this.apiMessageId,
                 content: answer,
                 role: 'assistant'
             })

@@ -164,7 +164,7 @@ class ChatflowTool_Tools implements INode {
         let toolInput = ''
         if (useQuestionFromChat) {
             toolInput = input
-        } else if (customInput) {
+        } else if (!customInput) {
             toolInput = customInput
         }
 
@@ -318,15 +318,7 @@ class ChatflowTool extends StructuredTool {
             body: JSON.stringify(body)
         }
 
-        let sandbox = {
-            $callOptions: options,
-            $callBody: body,
-            util: undefined,
-            Symbol: undefined,
-            child_process: undefined,
-            fs: undefined,
-            process: undefined
-        }
+        let sandbox = { $callOptions: options, $callBody: body }
 
         const code = `
 const fetch = require('node-fetch');
@@ -357,10 +349,7 @@ try {
             require: {
                 external: { modules: deps },
                 builtin: builtinDeps
-            },
-            eval: false,
-            wasm: false,
-            timeout: 10000
+            }
         } as any
 
         const vm = new NodeVM(vmOptions)

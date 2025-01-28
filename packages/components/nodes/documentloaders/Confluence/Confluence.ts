@@ -1,8 +1,8 @@
 import { omit } from 'lodash'
+import { ICommonObject, INode, INodeData, INodeParams } from '../../../src/Interface'
 import { TextSplitter } from 'langchain/text_splitter'
 import { ConfluencePagesLoader, ConfluencePagesLoaderParams } from '@langchain/community/document_loaders/web/confluence'
-import { getCredentialData, getCredentialParam, handleEscapeCharacters } from '../../../src/utils'
-import { ICommonObject, INode, INodeData, INodeParams, INodeOutputsValue } from '../../../src/Interface'
+import { getCredentialData, getCredentialParam } from '../../../src'
 
 class Confluence_DocumentLoaders implements INode {
     label: string
@@ -15,12 +15,11 @@ class Confluence_DocumentLoaders implements INode {
     baseClasses: string[]
     credential: INodeParams
     inputs: INodeParams[]
-    outputs: INodeOutputsValue[]
 
     constructor() {
         this.label = 'Confluence'
         this.name = 'confluence'
-        this.version = 2.0
+        this.version = 1.0
         this.type = 'Document'
         this.icon = 'confluence.svg'
         this.category = 'Document Loaders'
@@ -80,20 +79,6 @@ class Confluence_DocumentLoaders implements INode {
                 additionalParams: true
             }
         ]
-        this.outputs = [
-            {
-                label: 'Document',
-                name: 'document',
-                description: 'Array of document objects containing metadata and pageContent',
-                baseClasses: [...this.baseClasses, 'json']
-            },
-            {
-                label: 'Text',
-                name: 'text',
-                description: 'Concatenated string from pageContent of documents',
-                baseClasses: ['string', 'json']
-            }
-        ]
     }
 
     async init(nodeData: INodeData, _: string, options: ICommonObject): Promise<any> {
@@ -103,7 +88,6 @@ class Confluence_DocumentLoaders implements INode {
         const textSplitter = nodeData.inputs?.textSplitter as TextSplitter
         const metadata = nodeData.inputs?.metadata
         const _omitMetadataKeys = nodeData.inputs?.omitMetadataKeys as string
-        const output = nodeData.outputs?.output as string
 
         let omitMetadataKeys: string[] = []
         if (_omitMetadataKeys) {
@@ -173,15 +157,7 @@ class Confluence_DocumentLoaders implements INode {
             }))
         }
 
-        if (output === 'document') {
-            return docs
-        } else {
-            let finaltext = ''
-            for (const doc of docs) {
-                finaltext += `${doc.pageContent}\n`
-            }
-            return handleEscapeCharacters(finaltext, false)
-        }
+        return docs
     }
 }
 

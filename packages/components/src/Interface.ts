@@ -93,9 +93,6 @@ export interface INodeParams {
     hint?: Record<string, string>
     tabIdentifier?: string
     tabs?: Array<INodeParams>
-    refresh?: boolean
-    freeSolo?: boolean
-    loadPreviousNodes?: boolean
 }
 
 export interface INodeExecutionData {
@@ -185,8 +182,7 @@ export interface IMultiAgentNode {
     checkpointMemory?: any
 }
 
-type SeqAgentType = 'agent' | 'condition' | 'end' | 'start' | 'tool' | 'state' | 'llm' | 'utilities'
-export type ConversationHistorySelection = 'user_question' | 'last_message' | 'all_messages' | 'empty'
+type SeqAgentType = 'agent' | 'condition' | 'end' | 'start' | 'tool' | 'state' | 'llm'
 
 export interface ISeqAgentNode {
     id: string
@@ -406,9 +402,12 @@ export interface IStateWithMessages extends ICommonObject {
 }
 
 export interface IServerSideEventStreamer {
+    streamEvent(chatId: string, data: string): void
     streamStartEvent(chatId: string, data: any): void
+
     streamTokenEvent(chatId: string, data: string): void
     streamCustomEvent(chatId: string, eventType: string, data: any): void
+
     streamSourceDocumentsEvent(chatId: string, data: any): void
     streamUsedToolsEvent(chatId: string, data: any): void
     streamFileAnnotationsEvent(chatId: string, data: any): void
@@ -426,9 +425,7 @@ export enum FollowUpPromptProvider {
     AZURE_OPENAI = 'azureChatOpenAI',
     GOOGLE_GENAI = 'chatGoogleGenerativeAI',
     MISTRALAI = 'chatMistralAI',
-    OPENAI = 'chatOpenAI',
-    GROQ = 'groqChat',
-    OLLAMA = 'ollama'
+    OPENAI = 'chatOpenAI'
 }
 
 export type FollowUpPromptProviderConfig = {

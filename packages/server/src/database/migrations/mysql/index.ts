@@ -27,7 +27,6 @@ import { LongTextColumn1722301395521 } from './1722301395521-LongTextColumn'
 import { AddCustomTemplate1725629836652 } from './1725629836652-AddCustomTemplate'
 import { AddArtifactsToChatMessage1726156258465 } from './1726156258465-AddArtifactsToChatMessage'
 import { AddFollowUpPrompts1726666302024 } from './1726666302024-AddFollowUpPrompts'
-import { AddTypeToAssistant1733011290987 } from './1733011290987-AddTypeToAssistant'
 
 export const mysqlMigrations = [
     Init1693840429259,
@@ -58,6 +57,5 @@ export const mysqlMigrations = [
     LongTextColumn1722301395521,
     AddCustomTemplate1725629836652,
     AddArtifactsToChatMessage1726156258465,
-    AddFollowUpPrompts1726666302024,
-    AddTypeToAssistant1733011290987
+    AddFollowUpPrompts1726666302024
 ]

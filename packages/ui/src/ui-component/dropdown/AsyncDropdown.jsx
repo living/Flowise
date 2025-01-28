@@ -58,7 +58,6 @@ export const AsyncDropdown = ({
     onCreateNew,
     credentialNames = [],
     disabled = false,
-    freeSolo = false,
     disableClearable = false
 }) => {
     const customization = useSelector((state) => state.customization)
@@ -115,7 +114,6 @@ export const AsyncDropdown = ({
         <>
             <Autocomplete
                 id={name}
-                freeSolo={freeSolo}
                 disabled={disabled}
                 disableClearable={disableClearable}
                 size='small'
@@ -178,7 +176,6 @@ AsyncDropdown.propTypes = {
     onSelect: PropTypes.func,
     onCreateNew: PropTypes.func,
     disabled: PropTypes.bool,
-    freeSolo: PropTypes.bool,
     credentialNames: PropTypes.array,
     disableClearable: PropTypes.bool,
     isCreateNewOption: PropTypes.bool

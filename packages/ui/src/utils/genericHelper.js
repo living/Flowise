@@ -2,18 +2,25 @@ import { uniq } from 'lodash'
 import moment from 'moment'
 
 export const getUniqueNodeId = (nodeData, nodes) => {
-    let suffix = 0
-
-    // Construct base ID
-    let baseId = `${nodeData.name}_${suffix}`
-
-    // Increment suffix until a unique ID is found
-    while (nodes.some((node) => node.id === baseId)) {
-        suffix += 1
-        baseId = `${nodeData.name}_${suffix}`
+    // Get amount of same nodes
+    let totalSameNodes = 0
+    for (let i = 0; i < nodes.length; i += 1) {
+        const node = nodes[i]
+        if (node.data.name === nodeData.name) {
+            totalSameNodes += 1
+        }
     }
 
-    return baseId
+    // Get unique id
+    let nodeId = `${nodeData.name}_${totalSameNodes}`
+    for (let i = 0; i < nodes.length; i += 1) {
+        const node = nodes[i]
+        if (node.id === nodeId) {
+            totalSameNodes += 1
+            nodeId = `${nodeData.name}_${totalSameNodes}`
+        }
+    }
+    return nodeId
 }
 
 export const initializeDefaultNodeData = (nodeParams) => {
@@ -435,7 +442,7 @@ export const getAvailableNodesForVariable = (nodes, edges, target, targetHandle)
             collectParentNodes(parentNode.id, nodes, edges)
 
             // Check and add the parent node to the list if it does not include specific names
-            const excludeNodeNames = ['seqAgent', 'seqLLMNode', 'seqToolNode', 'seqCustomFunction', 'seqExecuteFlow']
+            const excludeNodeNames = ['seqAgent', 'seqLLMNode', 'seqToolNode']
             if (excludeNodeNames.includes(parentNode.data.name)) {
                 parentNodes.push(parentNode)
             }
@@ -569,24 +576,32 @@ export const generateRandomGradient = () => {
     return gradient
 }
 
-export const getInputVariables = (input) => {
-    // This regex will match single curly-braced substrings
-    const pattern = /\{([^{}]+)\}/g
-    const results = []
+export const getInputVariables = (paramValue) => {
+    let returnVal = paramValue
+    const variableStack = []
+    const inputVariables = []
+    let startIdx = 0
+    const endIdx = returnVal.length
 
-    let match
+    while (startIdx < endIdx) {
+        const substr = returnVal.substring(startIdx, startIdx + 1)
 
-    while ((match = pattern.exec(input)) !== null) {
-        const inside = match[1].trim()
-
-        // Check if there's a colon
-        if (!inside.includes(':')) {
-            // If there's no colon, add to results
-            results.push(inside)
+        // Store the opening double curly bracket
+        if (substr === '{') {
+            variableStack.push({ substr, startIdx: startIdx + 1 })
         }
-    }
 
-    return results
+        // Found the complete variable
+        if (substr === '}' && variableStack.length > 0 && variableStack[variableStack.length - 1].substr === '{') {
+            const variableStartIdx = variableStack[variableStack.length - 1].startIdx
+            const variableEndIdx = startIdx
+            const variableFullPath = returnVal.substring(variableStartIdx, variableEndIdx)
+            inputVariables.push(variableFullPath)
+            variableStack.pop()
+        }
+        startIdx += 1
+    }
+    return inputVariables
 }
 
 export const removeDuplicateURL = (message) => {

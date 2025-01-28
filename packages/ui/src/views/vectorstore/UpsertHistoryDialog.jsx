@@ -211,21 +211,17 @@ const UpsertHistoryDialog = ({ show, dialogProps, onCancel }) => {
     }
 
     const onStartDateSelected = (date) => {
-        const updatedDate = new Date(date)
-        updatedDate.setHours(0, 0, 0, 0)
-        setStartDate(updatedDate)
+        setStartDate(date)
         getUpsertHistoryApi.request(dialogProps.chatflow.id, {
-            startDate: updatedDate,
+            startDate: date,
             endDate: endDate
         })
     }
 
     const onEndDateSelected = (date) => {
-        const updatedDate = new Date(date)
-        updatedDate.setHours(23, 59, 59, 999)
-        setEndDate(updatedDate)
+        setEndDate(date)
         getUpsertHistoryApi.request(dialogProps.chatflow.id, {
-            endDate: updatedDate,
+            endDate: date,
             startDate: startDate
         })
     }

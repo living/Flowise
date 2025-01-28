@@ -8,7 +8,7 @@ const getAllAvailableAssistants = (credentialId) => client.get(`/openai-assistan
 // Assistant
 const createNewAssistant = (body) => client.post(`/assistants`, body)
 
-const getAllAssistants = (type) => client.get('/assistants?type=' + type)
+const getAllAssistants = () => client.get('/assistants')
 
 const getSpecificAssistant = (id) => client.get(`/assistants/${id}`)
 
@@ -44,12 +44,6 @@ const uploadFilesToAssistant = (credentialId, formData) =>
         headers: { 'Content-Type': 'multipart/form-data' }
     })
 
-const getChatModels = () => client.get('/assistants/components/chatmodels')
-const getDocStores = () => client.get('/assistants/components/docstores')
-const getTools = () => client.get('/assistants/components/tools')
-
-const generateAssistantInstruction = (body) => client.post(`/assistants/generate/instruction`, body)
-
 export default {
     getAllAssistants,
     getSpecificAssistant,
@@ -65,9 +59,5 @@ export default {
     uploadFilesToAssistant,
     uploadFilesToAssistantVectorStore,
     deleteFilesFromAssistantVectorStore,
-    deleteAssistantVectorStore,
-    getChatModels,
-    getDocStores,
-    getTools,
-    generateAssistantInstruction
+    deleteAssistantVectorStore
 }

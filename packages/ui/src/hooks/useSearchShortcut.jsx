@@ -3,7 +3,7 @@ import { getOS } from '@/utils/genericHelper'
 
 const isMac = getOS() === 'macos'
 
-const useSearchShortcut = (inputRef) => {
+const useSearchShorcut = (inputRef) => {
     useEffect(() => {
         const component = inputRef.current
 
@@ -32,4 +32,4 @@ const useSearchShortcut = (inputRef) => {
     }, [inputRef]) // Add inputRef to the dependency array to ensure the effect is re-applied if inputRef changes
 }
 
-export default useSearchShortcut
+export default useSearchShorcut

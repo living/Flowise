@@ -1,5 +1,5 @@
 import { ICommonObject, IDatabaseEntity, INode, INodeData, INodeParams } from '../../../src/Interface'
-import { getBaseClasses, transformBracesWithColon } from '../../../src/utils'
+import { getBaseClasses } from '../../../src/utils'
 import { ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate } from '@langchain/core/prompts'
 import { getVM } from '../../sequentialagents/commonUtils'
 import { DataSource } from 'typeorm'
@@ -98,16 +98,13 @@ class ChatPromptTemplate_Prompts implements INode {
     }
 
     async init(nodeData: INodeData, _: string, options: ICommonObject): Promise<any> {
-        let systemMessagePrompt = nodeData.inputs?.systemMessagePrompt as string
-        let humanMessagePrompt = nodeData.inputs?.humanMessagePrompt as string
+        const systemMessagePrompt = nodeData.inputs?.systemMessagePrompt as string
+        const humanMessagePrompt = nodeData.inputs?.humanMessagePrompt as string
         const promptValuesStr = nodeData.inputs?.promptValues
         const tabIdentifier = nodeData.inputs?.[`${TAB_IDENTIFIER}_${nodeData.id}`] as string
         const selectedTab = tabIdentifier ? tabIdentifier.split(`_${nodeData.id}`)[0] : 'messageHistoryCode'
         const messageHistoryCode = nodeData.inputs?.messageHistoryCode
         const messageHistory = nodeData.inputs?.messageHistory
-
-        systemMessagePrompt = transformBracesWithColon(systemMessagePrompt)
-        humanMessagePrompt = transformBracesWithColon(humanMessagePrompt)
 
         let prompt = ChatPromptTemplate.fromMessages([
             SystemMessagePromptTemplate.fromTemplate(systemMessagePrompt),

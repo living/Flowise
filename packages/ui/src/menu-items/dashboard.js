@@ -39,14 +39,6 @@ const dashboard = {
             isBeta: true
         },
         {
-            id: 'assistants',
-            title: 'Assistants',
-            type: 'item',
-            url: '/assistants',
-            icon: icons.IconRobot,
-            breadcrumbs: true
-        },
-        {
             id: 'marketplaces',
             title: 'Marketplaces',
             type: 'item',
@@ -60,6 +52,14 @@ const dashboard = {
             type: 'item',
             url: '/tools',
             icon: icons.IconTool,
+            breadcrumbs: true
+        },
+        {
+            id: 'assistants',
+            title: 'Assistants',
+            type: 'item',
+            url: '/assistants',
+            icon: icons.IconRobot,
             breadcrumbs: true
         },
         {

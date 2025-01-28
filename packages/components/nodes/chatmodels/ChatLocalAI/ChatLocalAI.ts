@@ -19,7 +19,7 @@ class ChatLocalAI_ChatModels implements INode {
     constructor() {
         this.label = 'ChatLocalAI'
         this.name = 'chatLocalAI'
-        this.version = 3.0
+        this.version = 2.0
         this.type = 'ChatLocalAI'
         this.icon = 'localai.png'
         this.category = 'Chat Models'
@@ -60,14 +60,6 @@ class ChatLocalAI_ChatModels implements INode {
                 optional: true
             },
             {
-                label: 'Streaming',
-                name: 'streaming',
-                type: 'boolean',
-                default: true,
-                optional: true,
-                additionalParams: true
-            },
-            {
                 label: 'Max Tokens',
                 name: 'maxTokens',
                 type: 'number',
@@ -101,8 +93,6 @@ class ChatLocalAI_ChatModels implements INode {
         const topP = nodeData.inputs?.topP as string
         const timeout = nodeData.inputs?.timeout as string
         const basePath = nodeData.inputs?.basePath as string
-        const streaming = nodeData.inputs?.streaming as boolean
-
         const credentialData = await getCredentialData(nodeData.credential ?? '', options)
         const localAIApiKey = getCredentialParam('localAIApiKey', credentialData, nodeData)
 
@@ -111,8 +101,7 @@ class ChatLocalAI_ChatModels implements INode {
         const obj: Partial<OpenAIChatInput> & BaseLLMParams & { openAIApiKey?: string } = {
             temperature: parseFloat(temperature),
             modelName,
-            openAIApiKey: 'sk-',
-            streaming: streaming ?? true
+            openAIApiKey: 'sk-'
         }
 
         if (maxTokens) obj.maxTokens = parseInt(maxTokens, 10)

@@ -138,14 +138,7 @@ class Elasticsearch_VectorStores implements INode {
             })
             // end of workaround
 
-            const { elasticClient, elasticSearchClientArgs } = prepareClientArgs(
-                endPoint,
-                cloudId,
-                credentialData,
-                nodeData,
-                similarityMeasure,
-                indexName
-            )
+            const elasticSearchClientArgs = prepareClientArgs(endPoint, cloudId, credentialData, nodeData, similarityMeasure, indexName)
             const vectorStore = new ElasticVectorSearch(embeddings, elasticSearchClientArgs)
 
             try {
@@ -162,11 +155,9 @@ class Elasticsearch_VectorStores implements INode {
                             vectorStoreName: indexName
                         }
                     })
-                    await elasticClient.close()
                     return res
                 } else {
                     await vectorStore.addDocuments(finalDocs)
-                    await elasticClient.close()
                     return { numAdded: finalDocs.length, addedDocs: finalDocs }
                 }
             } catch (e) {
@@ -183,14 +174,7 @@ class Elasticsearch_VectorStores implements INode {
             const endPoint = getCredentialParam('endpoint', credentialData, nodeData)
             const cloudId = getCredentialParam('cloudId', credentialData, nodeData)
 
-            const { elasticClient, elasticSearchClientArgs } = prepareClientArgs(
-                endPoint,
-                cloudId,
-                credentialData,
-                nodeData,
-                similarityMeasure,
-                indexName
-            )
+            const elasticSearchClientArgs = prepareClientArgs(endPoint, cloudId, credentialData, nodeData, similarityMeasure, indexName)
             const vectorStore = new ElasticVectorSearch(embeddings, elasticSearchClientArgs)
 
             try {
@@ -202,10 +186,8 @@ class Elasticsearch_VectorStores implements INode {
 
                     await vectorStore.delete({ ids: keys })
                     await recordManager.deleteKeys(keys)
-                    await elasticClient.close()
                 } else {
                     await vectorStore.delete({ ids })
-                    await elasticClient.close()
                 }
             } catch (e) {
                 throw new Error(e)
@@ -224,22 +206,8 @@ class Elasticsearch_VectorStores implements INode {
         const k = topK ? parseFloat(topK) : 4
         const output = nodeData.outputs?.output as string
 
-        const { elasticClient, elasticSearchClientArgs } = prepareClientArgs(
-            endPoint,
-            cloudId,
-            credentialData,
-            nodeData,
-            similarityMeasure,
-            indexName
-        )
+        const elasticSearchClientArgs = prepareClientArgs(endPoint, cloudId, credentialData, nodeData, similarityMeasure, indexName)
         const vectorStore = await ElasticVectorSearch.fromExistingIndex(embeddings, elasticSearchClientArgs)
-        const originalSimilaritySearchVectorWithScore = vectorStore.similaritySearchVectorWithScore
-
-        vectorStore.similaritySearchVectorWithScore = async (query: number[], k: number, filter?: any) => {
-            const results = await originalSimilaritySearchVectorWithScore.call(vectorStore, query, k, filter)
-            await elasticClient.close()
-            return results
-        }
 
         if (output === 'retriever') {
             return vectorStore.asRetriever(k)
@@ -321,17 +289,12 @@ const prepareClientArgs = (
                 similarity: 'l2_norm'
             }
     }
-
-    const elasticClient = new Client(elasticSearchClientOptions)
     const elasticSearchClientArgs: ElasticClientArgs = {
-        client: elasticClient,
+        client: new Client(elasticSearchClientOptions),
         indexName: indexName,
         vectorSearchOptions: vectorSearchOptions
     }
-    return {
-        elasticClient,
-        elasticSearchClientArgs
-    }
+    return elasticSearchClientArgs
 }
 
 module.exports = { nodeClass: Elasticsearch_VectorStores }

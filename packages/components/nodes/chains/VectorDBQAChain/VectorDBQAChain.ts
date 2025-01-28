@@ -55,7 +55,7 @@ class VectorDBQAChain_Chains implements INode {
 
         const chain = VectorDBQAChain.fromLLM(model, vectorStore, {
             k: (vectorStore as any)?.k ?? 4,
-            verbose: process.env.DEBUG === 'true'
+            verbose: process.env.DEBUG === 'true' ? true : false
         })
         return chain
     }

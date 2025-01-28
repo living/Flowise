@@ -16,16 +16,6 @@ class ChromaApi implements INodeCredential {
                 label: 'Chroma Api Key',
                 name: 'chromaApiKey',
                 type: 'password'
-            },
-            {
-                label: 'Chroma Tenant',
-                name: 'chromaTenant',
-                type: 'string'
-            },
-            {
-                label: 'Chroma Database',
-                name: 'chromaDatabase',
-                type: 'string'
             }
         ]
     }

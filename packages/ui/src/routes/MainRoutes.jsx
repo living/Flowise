@@ -21,9 +21,6 @@ const Tools = Loadable(lazy(() => import('@/views/tools')))
 
 // assistants routing
 const Assistants = Loadable(lazy(() => import('@/views/assistants')))
-const OpenAIAssistantLayout = Loadable(lazy(() => import('@/views/assistants/openai/OpenAIAssistantLayout')))
-const CustomAssistantLayout = Loadable(lazy(() => import('@/views/assistants/custom/CustomAssistantLayout')))
-const CustomAssistantConfigurePreview = Loadable(lazy(() => import('@/views/assistants/custom/CustomAssistantConfigurePreview')))
 
 // credentials routing
 const Credentials = Loadable(lazy(() => import('@/views/credentials')))
@@ -74,18 +71,6 @@ const MainRoutes = {
             element: <Assistants />
         },
         {
-            path: '/assistants/custom',
-            element: <CustomAssistantLayout />
-        },
-        {
-            path: '/assistants/custom/:id',
-            element: <CustomAssistantConfigurePreview />
-        },
-        {
-            path: '/assistants/openai',
-            element: <OpenAIAssistantLayout />
-        },
-        {
             path: '/credentials',
             element: <Credentials />
         },
@@ -98,27 +83,23 @@ const MainRoutes = {
             element: <Documents />
         },
         {
-            path: '/document-stores/:storeId',
+            path: '/document-stores/:id',
             element: <DocumentStoreDetail />
         },
         {
-            path: '/document-stores/chunks/:storeId/:fileId',
+            path: '/document-stores/chunks/:id/:id',
             element: <ShowStoredChunks />
         },
         {
-            path: '/document-stores/:storeId/:name',
+            path: '/document-stores/:id/:name',
             element: <LoaderConfigPreviewChunks />
         },
         {
-            path: '/document-stores/vector/:storeId',
+            path: '/document-stores/vector/:id',
             element: <VectorStoreConfigure />
         },
         {
-            path: '/document-stores/vector/:storeId/:docId',
-            element: <VectorStoreConfigure />
-        },
-        {
-            path: '/document-stores/query/:storeId',
+            path: '/document-stores/query/:id',
             element: <VectorStoreQuery />
         }
     ]

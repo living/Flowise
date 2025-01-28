@@ -1,5 +1,5 @@
 import { omit } from 'lodash'
-import { ICommonObject, INode, INodeData, INodeOutputsValue, INodeParams } from '../../../src/Interface'
+import { ICommonObject, INode, INodeData, INodeParams } from '../../../src/Interface'
 import {
     UnstructuredDirectoryLoader,
     UnstructuredLoaderOptions,
@@ -7,7 +7,7 @@ import {
     SkipInferTableTypes,
     HiResModelName
 } from '@langchain/community/document_loaders/fs/unstructured'
-import { getCredentialData, getCredentialParam, handleEscapeCharacters } from '../../../src/utils'
+import { getCredentialData, getCredentialParam } from '../../../src/utils'
 
 class UnstructuredFolder_DocumentLoaders implements INode {
     label: string
@@ -20,12 +20,11 @@ class UnstructuredFolder_DocumentLoaders implements INode {
     baseClasses: string[]
     credential: INodeParams
     inputs: INodeParams[]
-    outputs: INodeOutputsValue[]
 
     constructor() {
         this.label = 'Unstructured Folder Loader'
         this.name = 'unstructuredFolderLoader'
-        this.version = 3.0
+        this.version = 2.0
         this.type = 'Document'
         this.icon = 'unstructured-folder.svg'
         this.category = 'Document Loaders'
@@ -52,8 +51,7 @@ class UnstructuredFolder_DocumentLoaders implements INode {
                 description:
                     'Unstructured API URL. Read <a target="_blank" href="https://unstructured-io.github.io/unstructured/introduction.html#getting-started">more</a> on how to get started',
                 type: 'string',
-                placeholder: process.env.UNSTRUCTURED_API_URL || 'http://localhost:8000/general/v0/general',
-                optional: !!process.env.UNSTRUCTURED_API_URL
+                default: 'http://localhost:8000/general/v0/general'
             },
             {
                 label: 'Strategy',
@@ -401,20 +399,6 @@ class UnstructuredFolder_DocumentLoaders implements INode {
                 additionalParams: true
             }
         ]
-        this.outputs = [
-            {
-                label: 'Document',
-                name: 'document',
-                description: 'Array of document objects containing metadata and pageContent',
-                baseClasses: [...this.baseClasses, 'json']
-            },
-            {
-                label: 'Text',
-                name: 'text',
-                description: 'Concatenated string from pageContent of documents',
-                baseClasses: ['string', 'json']
-            }
-        ]
     }
 
     async init(nodeData: INodeData, _: string, options: ICommonObject): Promise<any> {
@@ -438,7 +422,6 @@ class UnstructuredFolder_DocumentLoaders implements INode {
         const newAfterNChars = nodeData.inputs?.newAfterNChars as number
         const maxCharacters = nodeData.inputs?.maxCharacters as number
         const _omitMetadataKeys = nodeData.inputs?.omitMetadataKeys as string
-        const output = nodeData.outputs?.output as string
 
         let omitMetadataKeys: string[] = []
         if (_omitMetadataKeys) {
@@ -503,15 +486,7 @@ class UnstructuredFolder_DocumentLoaders implements INode {
             }))
         }
 
-        if (output === 'document') {
-            return docs
-        } else {
-            let finaltext = ''
-            for (const doc of docs) {
-                finaltext += `${doc.pageContent}\n`
-            }
-            return handleEscapeCharacters(finaltext, false)
-        }
+        return docs
     }
 }
 

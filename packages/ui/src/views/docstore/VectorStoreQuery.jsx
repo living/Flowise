@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import ReactJson from 'flowise-react-json-view'
 import { cloneDeep } from 'lodash'
 import { v4 as uuidv4 } from 'uuid'
@@ -63,7 +63,8 @@ const VectorStoreQuery = () => {
     const enqueueSnackbar = (...args) => dispatch(enqueueSnackbarAction(...args))
     const closeSnackbar = (...args) => dispatch(closeSnackbarAction(...args))
 
-    const { storeId } = useParams()
+    const URLpath = document.location.pathname.toString().split('/')
+    const storeId = URLpath[URLpath.length - 1] === 'document-stores' ? '' : URLpath[URLpath.length - 1]
 
     const [documentChunks, setDocumentChunks] = useState([])
     const [loading, setLoading] = useState(false)

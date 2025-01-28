@@ -27,7 +27,7 @@ import {
     IServerSideEventStreamer
 } from '../../../src/Interface'
 import { ConsoleCallbackHandler, CustomChainHandler, additionalCallbacks } from '../../../src/handler'
-import { getBaseClasses, handleEscapeCharacters, transformBracesWithColon } from '../../../src/utils'
+import { getBaseClasses, handleEscapeCharacters } from '../../../src/utils'
 
 let systemMessage = `The following is a friendly conversation between a human and an AI. The AI is talkative and provides lots of specific details from its context. If the AI does not know the answer to a question, it truthfully says it does not know.`
 const inputKey = 'input'
@@ -170,8 +170,7 @@ class ConversationChain_Chains implements INode {
 
 const prepareChatPrompt = (nodeData: INodeData, humanImageMessages: MessageContentImageUrl[]) => {
     const memory = nodeData.inputs?.memory as FlowiseMemory
-    let prompt = nodeData.inputs?.systemMessagePrompt as string
-    prompt = transformBracesWithColon(prompt)
+    const prompt = nodeData.inputs?.systemMessagePrompt as string
     const chatPromptTemplate = nodeData.inputs?.chatPromptTemplate as ChatPromptTemplate
     let model = nodeData.inputs?.model as BaseChatModel
 

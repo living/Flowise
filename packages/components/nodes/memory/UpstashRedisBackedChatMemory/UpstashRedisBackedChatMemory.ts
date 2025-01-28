@@ -1,4 +1,5 @@
-import { Redis } from '@upstash/redis'
+import { Redis, RedisConfigNodejs } from '@upstash/redis'
+import { isEqual } from 'lodash'
 import { BufferMemory, BufferMemoryInput } from 'langchain/memory'
 import { UpstashRedisChatMessageHistory } from '@langchain/community/stores/message/upstash_redis'
 import { mapStoredMessageToChatMessage, AIMessage, HumanMessage, StoredMessage, BaseMessage } from '@langchain/core/messages'
@@ -11,6 +12,24 @@ import {
     mapChatMessageToBaseMessage
 } from '../../../src/utils'
 import { ICommonObject } from '../../../src/Interface'
+
+let redisClientSingleton: Redis
+let redisClientOption: RedisConfigNodejs
+
+const getRedisClientbyOption = (option: RedisConfigNodejs) => {
+    if (!redisClientSingleton) {
+        // if client doesn't exists
+        redisClientSingleton = new Redis(option)
+        redisClientOption = option
+        return redisClientSingleton
+    } else if (redisClientSingleton && !isEqual(option, redisClientOption)) {
+        // if client exists but option changed
+        redisClientSingleton = new Redis(option)
+        redisClientOption = option
+        return redisClientSingleton
+    }
+    return redisClientSingleton
+}
 
 class UpstashRedisBackedChatMemory_Memory implements INode {
     label: string
@@ -61,7 +80,7 @@ class UpstashRedisBackedChatMemory_Memory implements INode {
                 label: 'Session Timeouts',
                 name: 'sessionTTL',
                 type: 'number',
-                description: 'Seconds till a session expires. If not specified, the session will never expire.',
+                description: 'Omit this parameter to make sessions never expire',
                 additionalParams: true,
                 optional: true
             },
@@ -90,7 +109,7 @@ const initalizeUpstashRedis = async (nodeData: INodeData, options: ICommonObject
     const credentialData = await getCredentialData(nodeData.credential ?? '', options)
     const upstashRestToken = getCredentialParam('upstashRestToken', credentialData, nodeData)
 
-    const client = new Redis({
+    const client = getRedisClientbyOption({
         url: baseURL,
         token: upstashRestToken
     })

@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { enqueueSnackbar as enqueueSnackbarAction, closeSnackbar as closeSnackbarAction, SET_CHATFLOW } from '@/store/actions'
 import PropTypes from 'prop-types'
 
-import { Typography, Button, OutlinedInput, Stack } from '@mui/material'
+import { Box, Typography, Button, OutlinedInput } from '@mui/material'
 
 // Project import
 import { StyledButton } from '@/ui-component/button/StyledButton'
@@ -126,49 +126,55 @@ const RateLimit = () => {
 
     const textField = (message, fieldName, fieldLabel, fieldType = 'string', placeholder = '') => {
         return (
-            <Stack direction='column' spacing={1}>
-                <Typography>{fieldLabel}</Typography>
-                <OutlinedInput
-                    id={fieldName}
-                    type={fieldType}
-                    fullWidth
-                    value={message}
-                    placeholder={placeholder}
-                    name={fieldName}
-                    size='small'
-                    onChange={(e) => {
-                        onTextChanged(e.target.value, fieldName)
-                    }}
-                />
-            </Stack>
+            <Box sx={{ pt: 2, pb: 2 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                    <Typography sx={{ mb: 1 }}>{fieldLabel}</Typography>
+                    <OutlinedInput
+                        id={fieldName}
+                        type={fieldType}
+                        fullWidth
+                        value={message}
+                        placeholder={placeholder}
+                        name={fieldName}
+                        size='small'
+                        onChange={(e) => {
+                            onTextChanged(e.target.value, fieldName)
+                        }}
+                    />
+                </div>
+            </Box>
         )
     }
 
     return (
-        <Stack direction='column' spacing={2} sx={{ alignItems: 'start' }}>
-            <Typography variant='h3'>
+        <>
+            {/*Rate Limit*/}
+            <Typography variant='h4' sx={{ mb: 1 }}>
                 Rate Limit{' '}
                 <TooltipWithParser
-                    style={{ marginLeft: 10 }}
+                    style={{ mb: 1, mt: 2, marginLeft: 10 }}
                     title={
                         'Visit <a target="_blank" href="https://docs.flowiseai.com/rate-limit">Rate Limit Setup Guide</a> to set up Rate Limit correctly in your hosting environment.'
                     }
                 />
             </Typography>
-            <Stack direction='column' spacing={2} sx={{ width: '100%' }}>
-                <SwitchInput label='Enable Rate Limit' onChange={handleChange} value={rateLimitStatus} />
-                {rateLimitStatus && (
-                    <Stack direction='column' spacing={2} sx={{ width: '100%' }}>
-                        {textField(limitMax, 'limitMax', 'Message Limit per Duration', 'number', '5')}
-                        {textField(limitDuration, 'limitDuration', 'Duration in Second', 'number', '60')}
-                        {textField(limitMsg, 'limitMsg', 'Limit Message', 'string', 'You have reached the quota')}
-                    </Stack>
-                )}
-            </Stack>
-            <StyledButton disabled={checkDisabled()} variant='contained' onClick={() => onSave()} sx={{ width: 'auto' }}>
-                Save
+            <SwitchInput label='Enable Rate Limit' onChange={handleChange} value={rateLimitStatus} />
+            {rateLimitStatus && (
+                <>
+                    {textField(limitMax, 'limitMax', 'Message Limit per Duration', 'number', '5')}
+                    {textField(limitDuration, 'limitDuration', 'Duration in Second', 'number', '60')}
+                    {textField(limitMsg, 'limitMsg', 'Limit Message', 'string', 'You have reached the quota')}
+                </>
+            )}
+            <StyledButton
+                disabled={checkDisabled()}
+                style={{ marginBottom: 10, marginTop: 10 }}
+                variant='contained'
+                onClick={() => onSave()}
+            >
+                Save Changes
             </StyledButton>
-        </Stack>
+        </>
     )
 }
 

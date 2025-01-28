@@ -1,5 +1,5 @@
 import { BaseCache } from '@langchain/core/caches'
-import { ChatBaiduQianfan } from '@langchain/baidu-qianfan'
+import { ChatBaiduWenxin } from '@langchain/community/chat_models/baiduwenxin'
 import { ICommonObject, INode, INodeData, INodeParams } from '../../../src/Interface'
 import { getBaseClasses, getCredentialData, getCredentialParam } from '../../../src/utils'
 
@@ -18,17 +18,17 @@ class ChatBaiduWenxin_ChatModels implements INode {
     constructor() {
         this.label = 'ChatBaiduWenxin'
         this.name = 'chatBaiduWenxin'
-        this.version = 2.0
+        this.version = 1.0
         this.type = 'ChatBaiduWenxin'
         this.icon = 'baiduwenxin.svg'
         this.category = 'Chat Models'
         this.description = 'Wrapper around BaiduWenxin Chat Endpoints'
-        this.baseClasses = [this.type, ...getBaseClasses(ChatBaiduQianfan)]
+        this.baseClasses = [this.type, ...getBaseClasses(ChatBaiduWenxin)]
         this.credential = {
             label: 'Connect Credential',
             name: 'credential',
             type: 'credential',
-            credentialNames: ['baiduQianfanApi']
+            credentialNames: ['baiduApi']
         }
         this.inputs = [
             {
@@ -50,13 +50,6 @@ class ChatBaiduWenxin_ChatModels implements INode {
                 step: 0.1,
                 default: 0.9,
                 optional: true
-            },
-            {
-                label: 'Streaming',
-                name: 'streaming',
-                type: 'boolean',
-                default: true,
-                optional: true
             }
         ]
     }
@@ -65,22 +58,21 @@ class ChatBaiduWenxin_ChatModels implements INode {
         const cache = nodeData.inputs?.cache as BaseCache
         const temperature = nodeData.inputs?.temperature as string
         const modelName = nodeData.inputs?.modelName as string
-        const streaming = nodeData.inputs?.streaming as boolean
 
         const credentialData = await getCredentialData(nodeData.credential ?? '', options)
-        const qianfanAccessKey = getCredentialParam('qianfanAccessKey', credentialData, nodeData)
-        const qianfanSecretKey = getCredentialParam('qianfanSecretKey', credentialData, nodeData)
+        const baiduApiKey = getCredentialParam('baiduApiKey', credentialData, nodeData)
+        const baiduSecretKey = getCredentialParam('baiduSecretKey', credentialData, nodeData)
 
-        const obj: Partial<ChatBaiduQianfan> = {
-            streaming: streaming ?? true,
-            qianfanAccessKey,
-            qianfanSecretKey,
+        const obj: Partial<ChatBaiduWenxin> = {
+            streaming: true,
+            baiduApiKey,
+            baiduSecretKey,
             modelName,
             temperature: temperature ? parseFloat(temperature) : undefined
         }
         if (cache) obj.cache = cache
 
-        const model = new ChatBaiduQianfan(obj)
+        const model = new ChatBaiduWenxin(obj)
         return model
     }
 }

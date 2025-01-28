@@ -170,7 +170,7 @@ json.dumps(my_dict)`
             const chain = new LLMChain({
                 llm: model,
                 prompt: PromptTemplate.fromTemplate(systemPrompt),
-                verbose: process.env.DEBUG === 'true'
+                verbose: process.env.DEBUG === 'true' ? true : false
             })
             const inputs = {
                 dict: dataframeColDict,
@@ -201,7 +201,7 @@ json.dumps(my_dict)`
                 prompt: PromptTemplate.fromTemplate(
                     systemMessagePrompt ? `${systemMessagePrompt}\n${finalSystemPrompt}` : finalSystemPrompt
                 ),
-                verbose: process.env.DEBUG === 'true'
+                verbose: process.env.DEBUG === 'true' ? true : false
             })
             const inputs = {
                 question: input,

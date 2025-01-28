@@ -18,7 +18,7 @@ class End_SeqAgents implements INode {
     constructor() {
         this.label = 'End'
         this.name = 'seqEnd'
-        this.version = 2.1
+        this.version = 2.0
         this.type = 'End'
         this.icon = 'end.svg'
         this.category = 'Sequential Agents'
@@ -27,11 +27,9 @@ class End_SeqAgents implements INode {
         this.documentation = 'https://docs.flowiseai.com/using-flowise/agentflows/sequential-agents#id-10.-end-node'
         this.inputs = [
             {
-                label: 'Sequential Node',
+                label: 'Agent | Condition | LLM | Tool Node',
                 name: 'sequentialNode',
-                type: 'Agent | Condition | LLMNode | ToolNode | CustomFunction | ExecuteFlow',
-                description:
-                    'Can be connected to one of the following nodes: Agent, Condition, LLM Node, Tool Node, Custom Function, Execute Flow'
+                type: 'Agent | Condition | LLMNode | ToolNode'
             }
         ]
         this.hideOutput = true

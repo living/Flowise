@@ -5,12 +5,6 @@ import { ICommonObject, INode, INodeData, INodeOptionsValue, INodeParams } from 
 import { getBaseClasses, getCredentialData, getCredentialParam } from '../../../src/utils'
 import { getModels, MODEL_TYPE } from '../../../src/modelLoader'
 
-const serverCredentialsExists =
-    !!process.env.AZURE_OPENAI_API_KEY &&
-    !!process.env.AZURE_OPENAI_API_INSTANCE_NAME &&
-    !!process.env.AZURE_OPENAI_API_DEPLOYMENT_NAME &&
-    !!process.env.AZURE_OPENAI_API_VERSION
-
 class AzureOpenAI_LLMs implements INode {
     label: string
     name: string
@@ -36,8 +30,7 @@ class AzureOpenAI_LLMs implements INode {
             label: 'Connect Credential',
             name: 'credential',
             type: 'credential',
-            credentialNames: ['azureOpenAIApi'],
-            optional: serverCredentialsExists
+            credentialNames: ['azureOpenAIApi']
         }
         this.inputs = [
             {

@@ -9,8 +9,6 @@ interface ChromaAuth {
 
 export class ChromaExtended extends Chroma {
     chromaApiKey?: string
-    chromaTenant?: string
-    chromaDatabase?: string
 
     constructor(embeddings: Embeddings, args: ChromaLibArgs & Partial<ChromaAuth>) {
         super(embeddings, args)
@@ -35,12 +33,6 @@ export class ChromaExtended extends Chroma {
                             Authorization: `Bearer ${this.chromaApiKey}`
                         }
                     }
-                }
-                if (this.chromaTenant) {
-                    obj.tenant = this.chromaTenant
-                }
-                if (this.chromaDatabase) {
-                    obj.database = this.chromaDatabase
                 }
                 this.index = new ChromaClient(obj)
             }

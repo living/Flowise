@@ -1,9 +1,9 @@
 import { BaseCache } from '@langchain/core/caches'
 import { ICommonObject, IMultiModalOption, INode, INodeData, INodeOptionsValue, INodeParams } from '../../../src/Interface'
 import { getBaseClasses, getCredentialData, getCredentialParam } from '../../../src/utils'
-import { getModels, getRegions, MODEL_TYPE } from '../../../src/modelLoader'
-import { ChatBedrockConverseInput, ChatBedrockConverse } from '@langchain/aws'
 import { BedrockChat } from './FlowiseAWSChatBedrock'
+import { getModels, getRegions, MODEL_TYPE } from '../../../src/modelLoader'
+import { BedrockChatFields } from '@langchain/community/chat_models/bedrock'
 
 /**
  * @author Michael Connor <mlconnor@yahoo.com>
@@ -23,12 +23,12 @@ class AWSChatBedrock_ChatModels implements INode {
     constructor() {
         this.label = 'AWS ChatBedrock'
         this.name = 'awsChatBedrock'
-        this.version = 6.0
+        this.version = 5.0
         this.type = 'AWSChatBedrock'
         this.icon = 'aws.svg'
         this.category = 'Chat Models'
-        this.description = 'Wrapper around AWS Bedrock large language models that use the Converse API'
-        this.baseClasses = [this.type, ...getBaseClasses(ChatBedrockConverse)]
+        this.description = 'Wrapper around AWS Bedrock large language models that use the Chat endpoint'
+        this.baseClasses = [this.type, ...getBaseClasses(BedrockChat)]
         this.credential = {
             label: 'AWS Credential',
             name: 'credential',
@@ -55,7 +55,7 @@ class AWSChatBedrock_ChatModels implements INode {
                 name: 'model',
                 type: 'asyncOptions',
                 loadMethod: 'listModels',
-                default: 'anthropic.claude-3-haiku-20240307-v1:0'
+                default: 'anthropic.claude-3-haiku'
             },
             {
                 label: 'Custom Model Name',
@@ -63,14 +63,6 @@ class AWSChatBedrock_ChatModels implements INode {
                 description: 'If provided, will override model selected from Model Name option',
                 type: 'string',
                 optional: true
-            },
-            {
-                label: 'Streaming',
-                name: 'streaming',
-                type: 'boolean',
-                default: true,
-                optional: true,
-                additionalParams: true
             },
             {
                 label: 'Temperature',
@@ -97,7 +89,7 @@ class AWSChatBedrock_ChatModels implements INode {
                 name: 'allowImageUploads',
                 type: 'boolean',
                 description:
-                    'Allow image input. Refer to the <a href="https://docs.flowiseai.com/using-flowise/uploads#image" target="_blank">docs</a> for more details.',
+                    'Only works with claude-3-* models when image is being uploaded from chat. Compatible with LLMChain, Conversation Chain, ReAct Agent, Conversational Agent, Tool Agent',
                 default: false,
                 optional: true
             }
@@ -123,7 +115,7 @@ class AWSChatBedrock_ChatModels implements INode {
         const cache = nodeData.inputs?.cache as BaseCache
         const streaming = nodeData.inputs?.streaming as boolean
 
-        const obj: ChatBedrockConverseInput = {
+        const obj: BedrockChatFields = {
             region: iRegion,
             model: customModel ? customModel : iModel,
             maxTokens: parseInt(iMax_tokens_to_sample, 10),
@@ -161,7 +153,7 @@ class AWSChatBedrock_ChatModels implements INode {
         }
 
         const amazonBedrock = new BedrockChat(nodeData.id, obj)
-        amazonBedrock.setMultiModalOption(multiModalOption)
+        if (obj.model?.includes('anthropic.claude-3')) amazonBedrock.setMultiModalOption(multiModalOption)
         return amazonBedrock
     }
 }

@@ -60,8 +60,7 @@ const DocumentStoreCard = ({ data, images, onClick }) => {
                                     WebkitBoxOrient: 'vertical',
                                     textOverflow: 'ellipsis',
                                     overflow: 'hidden',
-                                    flex: 1,
-                                    mr: 1
+                                    flex: 1
                                 }}
                             >
                                 {data.name}

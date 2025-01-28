@@ -119,14 +119,7 @@ class IfElseFunction_Utilities implements INode {
             }
         }
 
-        let sandbox: any = {
-            $input: input,
-            util: undefined,
-            Symbol: undefined,
-            child_process: undefined,
-            fs: undefined,
-            process: undefined
-        }
+        let sandbox: any = { $input: input }
         sandbox['$vars'] = prepareSandboxVars(variables)
         sandbox['$flow'] = flow
 
@@ -148,10 +141,7 @@ class IfElseFunction_Utilities implements INode {
             require: {
                 external: { modules: deps },
                 builtin: builtinDeps
-            },
-            eval: false,
-            wasm: false,
-            timeout: 10000
+            }
         } as any
 
         const vm = new NodeVM(nodeVMOptions)

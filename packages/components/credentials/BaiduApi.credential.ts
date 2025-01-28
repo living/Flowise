@@ -1,28 +1,28 @@
 import { INodeParams, INodeCredential } from '../src/Interface'
 
-class BaiduQianfanApi implements INodeCredential {
+class BaiduApi implements INodeCredential {
     label: string
     name: string
     version: number
     inputs: INodeParams[]
 
     constructor() {
-        this.label = 'Baidu Qianfan API'
-        this.name = 'baiduQianfanApi'
-        this.version = 2.0
+        this.label = 'Baidu API'
+        this.name = 'baiduApi'
+        this.version = 1.0
         this.inputs = [
             {
-                label: 'Qianfan Access Key',
-                name: 'qianfanAccessKey',
-                type: 'string'
+                label: 'Baidu Api Key',
+                name: 'baiduApiKey',
+                type: 'password'
             },
             {
-                label: 'Qianfan Secret Key',
-                name: 'qianfanSecretKey',
+                label: 'Baidu Secret Key',
+                name: 'baiduSecretKey',
                 type: 'password'
             }
         ]
     }
 }
 
-module.exports = { credClass: BaiduQianfanApi }
+module.exports = { credClass: BaiduApi }

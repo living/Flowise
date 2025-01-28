@@ -24,7 +24,6 @@ import useApi from '@/hooks/useApi'
 
 // utils
 import useNotifier from '@/utils/useNotifier'
-import { initializeDefaultNodeData } from '@/utils/genericHelper'
 
 // const
 import { baseURL, REDACTED_CREDENTIAL_VALUE } from '@/store/constant'
@@ -96,8 +95,7 @@ const AddEditCredentialDialog = ({ show, dialogProps, onCancel, onConfirm, setEr
             // When credential dialog is to add a new credential
             setName('')
             setCredential({})
-            const defaultCredentialData = initializeDefaultNodeData(dialogProps.credentialComponent.inputs)
-            setCredentialData(defaultCredentialData)
+            setCredentialData({})
             setComponentCredential(dialogProps.credentialComponent)
         }
 

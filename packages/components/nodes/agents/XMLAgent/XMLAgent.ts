@@ -6,7 +6,7 @@ import { RunnableSequence } from '@langchain/core/runnables'
 import { Tool } from '@langchain/core/tools'
 import { ChatPromptTemplate, HumanMessagePromptTemplate, MessagesPlaceholder } from '@langchain/core/prompts'
 import { formatLogToMessage } from 'langchain/agents/format_scratchpad/log_to_message'
-import { getBaseClasses, transformBracesWithColon } from '../../../src/utils'
+import { getBaseClasses } from '../../../src/utils'
 import {
     FlowiseMemory,
     ICommonObject,
@@ -57,6 +57,7 @@ class XMLAgent_Agents implements INode {
     baseClasses: string[]
     inputs: INodeParams[]
     sessionId?: string
+    badge?: string
 
     constructor(fields?: { sessionId?: string }) {
         this.label = 'XML Agent'
@@ -222,14 +223,12 @@ const prepareAgent = async (
     const model = nodeData.inputs?.model as BaseChatModel
     const maxIterations = nodeData.inputs?.maxIterations as string
     const memory = nodeData.inputs?.memory as FlowiseMemory
-    let systemMessage = nodeData.inputs?.systemMessage as string
+    const systemMessage = nodeData.inputs?.systemMessage as string
     let tools = nodeData.inputs?.tools
     tools = flatten(tools)
     const inputKey = memory.inputKey ? memory.inputKey : 'input'
     const memoryKey = memory.memoryKey ? memory.memoryKey : 'chat_history'
     const prependMessages = options?.prependMessages
-
-    systemMessage = transformBracesWithColon(systemMessage)
 
     let promptMessage = systemMessage ? systemMessage : defaultSystemMessage
     if (memory.memoryKey) promptMessage = promptMessage.replaceAll('{chat_history}', `{${memory.memoryKey}}`)
@@ -278,7 +277,7 @@ const prepareAgent = async (
         chatId: flowObj?.chatId,
         input: flowObj?.input,
         isXML: true,
-        verbose: process.env.DEBUG === 'true',
+        verbose: process.env.DEBUG === 'true' ? true : false,
         maxIterations: maxIterations ? parseFloat(maxIterations) : undefined
     })
 

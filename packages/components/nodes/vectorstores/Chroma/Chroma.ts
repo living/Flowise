@@ -111,8 +111,6 @@ class Chroma_VectorStores implements INode {
 
             const credentialData = await getCredentialData(nodeData.credential ?? '', options)
             const chromaApiKey = getCredentialParam('chromaApiKey', credentialData, nodeData)
-            const chromaTenant = getCredentialParam('chromaTenant', credentialData, nodeData)
-            const chromaDatabase = getCredentialParam('chromaDatabase', credentialData, nodeData)
 
             const flattenDocs = docs && docs.length ? flatten(docs) : []
             const finalDocs = []
@@ -126,13 +124,9 @@ class Chroma_VectorStores implements INode {
                 collectionName: string
                 url?: string
                 chromaApiKey?: string
-                chromaTenant?: string
-                chromaDatabase?: string
             } = { collectionName }
             if (chromaURL) obj.url = chromaURL
             if (chromaApiKey) obj.chromaApiKey = chromaApiKey
-            if (chromaTenant) obj.chromaTenant = chromaTenant
-            if (chromaDatabase) obj.chromaDatabase = chromaDatabase
 
             try {
                 if (recordManager) {
@@ -165,20 +159,14 @@ class Chroma_VectorStores implements INode {
 
             const credentialData = await getCredentialData(nodeData.credential ?? '', options)
             const chromaApiKey = getCredentialParam('chromaApiKey', credentialData, nodeData)
-            const chromaTenant = getCredentialParam('chromaTenant', credentialData, nodeData)
-            const chromaDatabase = getCredentialParam('chromaDatabase', credentialData, nodeData)
 
             const obj: {
                 collectionName: string
                 url?: string
                 chromaApiKey?: string
-                chromaTenant?: string
-                chromaDatabase?: string
             } = { collectionName }
             if (chromaURL) obj.url = chromaURL
             if (chromaApiKey) obj.chromaApiKey = chromaApiKey
-            if (chromaTenant) obj.chromaTenant = chromaTenant
-            if (chromaDatabase) obj.chromaDatabase = chromaDatabase
 
             try {
                 if (recordManager) {
@@ -211,8 +199,6 @@ class Chroma_VectorStores implements INode {
 
         const credentialData = await getCredentialData(nodeData.credential ?? '', options)
         const chromaApiKey = getCredentialParam('chromaApiKey', credentialData, nodeData)
-        const chromaTenant = getCredentialParam('chromaTenant', credentialData, nodeData)
-        const chromaDatabase = getCredentialParam('chromaDatabase', credentialData, nodeData)
 
         const chromaMetadataFilter = nodeData.inputs?.chromaMetadataFilter
 
@@ -220,14 +206,10 @@ class Chroma_VectorStores implements INode {
             collectionName: string
             url?: string
             chromaApiKey?: string
-            chromaTenant?: string
-            chromaDatabase?: string
             filter?: object | undefined
         } = { collectionName }
         if (chromaURL) obj.url = chromaURL
         if (chromaApiKey) obj.chromaApiKey = chromaApiKey
-        if (chromaTenant) obj.chromaTenant = chromaTenant
-        if (chromaDatabase) obj.chromaDatabase = chromaDatabase
         if (chromaMetadataFilter) {
             const metadatafilter = typeof chromaMetadataFilter === 'object' ? chromaMetadataFilter : JSON.parse(chromaMetadataFilter)
             obj.filter = metadatafilter

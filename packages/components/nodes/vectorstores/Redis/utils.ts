@@ -1,5 +1,3 @@
-import { isNil } from 'lodash'
-
 /*
  * Escapes all '-' characters.
  * Redis Search considers '-' as a negative operator, hence we need
@@ -10,10 +8,6 @@ export const escapeSpecialChars = (str: string) => {
 }
 
 export const escapeAllStrings = (obj: object) => {
-    if (isNil(obj)) {
-        // return if obj is null or undefined to avoid "TypeError: Cannot convert undefined or null to object"
-        return
-    }
     Object.keys(obj).forEach((key: string) => {
         // @ts-ignore
         let item = obj[key]

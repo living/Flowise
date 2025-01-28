@@ -96,7 +96,7 @@ class Condition_SeqAgents implements INode {
     constructor() {
         this.label = 'Condition'
         this.name = 'seqCondition'
-        this.version = 2.1
+        this.version = 2.0
         this.type = 'Condition'
         this.icon = 'condition.svg'
         this.category = 'Sequential Agents'
@@ -112,11 +112,9 @@ class Condition_SeqAgents implements INode {
                 placeholder: 'If X, then Y'
             },
             {
-                label: 'Sequential Node',
+                label: 'Start | Agent | LLM | Tool Node',
                 name: 'sequentialNode',
-                type: 'Start | Agent | LLMNode | ToolNode | CustomFunction | ExecuteFlow',
-                description:
-                    'Can be connected to one of the following nodes: Start, Agent, LLM Node, Tool Node, Custom Function, Execute Flow',
+                type: 'Start | Agent | LLMNode | ToolNode',
                 list: true
             },
             {

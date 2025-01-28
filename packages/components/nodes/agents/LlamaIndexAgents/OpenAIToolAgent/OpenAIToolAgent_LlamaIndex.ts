@@ -24,6 +24,7 @@ class OpenAIFunctionAgent_LlamaIndex_Agents implements INode {
     tags: string[]
     inputs: INodeParams[]
     sessionId?: string
+    badge?: string
 
     constructor(fields?: { sessionId?: string }) {
         this.label = 'OpenAI Tool Agent'
@@ -107,7 +108,7 @@ class OpenAIFunctionAgent_LlamaIndex_Agents implements INode {
             tools,
             llm: model,
             chatHistory: chatHistory,
-            verbose: process.env.DEBUG === 'true'
+            verbose: process.env.DEBUG === 'true' ? true : false
         })
 
         let text = ''
@@ -119,7 +120,7 @@ class OpenAIFunctionAgent_LlamaIndex_Agents implements INode {
                 message: input,
                 chatHistory,
                 stream: true,
-                verbose: process.env.DEBUG === 'true'
+                verbose: process.env.DEBUG === 'true' ? true : false
             })
             for await (const chunk of stream) {
                 //console.log('chunk', chunk)
@@ -147,7 +148,7 @@ class OpenAIFunctionAgent_LlamaIndex_Agents implements INode {
                 }
             }
         } else {
-            const response = await agent.chat({ message: input, chatHistory, verbose: process.env.DEBUG === 'true' })
+            const response = await agent.chat({ message: input, chatHistory, verbose: process.env.DEBUG === 'true' ? true : false })
             if (response.sources.length) {
                 for (const sourceTool of response.sources) {
                     usedTools.push({

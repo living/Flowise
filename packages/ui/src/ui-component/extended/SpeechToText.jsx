@@ -17,8 +17,6 @@ import { Dropdown } from '@/ui-component/dropdown/Dropdown'
 import openAISVG from '@/assets/images/openai.svg'
 import assemblyAIPng from '@/assets/images/assemblyai.png'
 import localAiPng from '@/assets/images/localai.png'
-import azureSvg from '@/assets/images/azure_openai.svg'
-import groqPng from '@/assets/images/groq.png'
 
 // store
 import useNotifier from '@/utils/useNotifier'
@@ -31,9 +29,7 @@ import chatflowsApi from '@/api/chatflows'
 const SpeechToTextType = {
     OPENAI_WHISPER: 'openAIWhisper',
     ASSEMBLYAI_TRANSCRIBE: 'assemblyAiTranscribe',
-    LOCALAI_STT: 'localAISTT',
-    AZURE_COGNITIVE: 'azureCognitive',
-    GROQ_WHISPER: 'groqWhisper'
+    LOCALAI_STT: 'localAISTT'
 }
 
 // Weird quirk - the key must match the name property value.
@@ -143,98 +139,6 @@ const speechToTextProviders = {
                 optional: true
             }
         ]
-    },
-    [SpeechToTextType.AZURE_COGNITIVE]: {
-        label: 'Azure Cognitive Services',
-        name: SpeechToTextType.AZURE_COGNITIVE,
-        icon: azureSvg,
-        url: 'https://azure.microsoft.com/en-us/products/cognitive-services/speech-services',
-        inputs: [
-            {
-                label: 'Connect Credential',
-                name: 'credential',
-                type: 'credential',
-                credentialNames: ['azureCognitiveServices']
-            },
-            {
-                label: 'Language',
-                name: 'language',
-                type: 'string',
-                description: 'The recognition language (e.g., "en-US", "es-ES")',
-                placeholder: 'en-US',
-                optional: true
-            },
-            {
-                label: 'Profanity Filter Mode',
-                name: 'profanityFilterMode',
-                type: 'options',
-                description: 'How to handle profanity in the transcription',
-                options: [
-                    {
-                        label: 'None',
-                        name: 'None'
-                    },
-                    {
-                        label: 'Masked',
-                        name: 'Masked'
-                    },
-                    {
-                        label: 'Removed',
-                        name: 'Removed'
-                    }
-                ],
-                default: 'Masked',
-                optional: true
-            },
-            {
-                label: 'Audio Channels',
-                name: 'channels',
-                type: 'string',
-                description: 'Comma-separated list of audio channels to process (e.g., "0,1")',
-                placeholder: '0,1',
-                default: '0,1'
-            }
-        ]
-    },
-    [SpeechToTextType.GROQ_WHISPER]: {
-        label: 'Groq Whisper',
-        name: SpeechToTextType.GROQ_WHISPER,
-        icon: groqPng,
-        url: 'https://console.groq.com/',
-        inputs: [
-            {
-                label: 'Model',
-                name: 'model',
-                type: 'string',
-                description: `The STT model to load. Defaults to whisper-large-v3 if left blank.`,
-                placeholder: 'whisper-large-v3',
-                optional: true
-            },
-            {
-                label: 'Connect Credential',
-                name: 'credential',
-                type: 'credential',
-                credentialNames: ['groqApi']
-            },
-            {
-                label: 'Language',
-                name: 'language',
-                type: 'string',
-                description:
-                    'The language of the input audio. Supplying the input language in ISO-639-1 format will improve accuracy and latency.',
-                placeholder: 'en',
-                optional: true
-            },
-            {
-                label: 'Temperature',
-                name: 'temperature',
-                type: 'number',
-                step: 0.1,
-                description:
-                    'The sampling temperature, between 0 and 1. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.',
-                optional: true
-            }
-        ]
     }
 }
 
@@ -306,9 +210,6 @@ const SpeechToText = ({ dialogProps }) => {
                     newVal[provider.name] = { ...speechToText[provider.name], status: false }
                 }
             })
-            if (providerName !== 'none' && newVal['none']) {
-                newVal['none'].status = false
-            }
         }
         setSpeechToText(newVal)
         return newVal
@@ -347,7 +248,9 @@ const SpeechToText = ({ dialogProps }) => {
     return (
         <>
             <Box fullWidth sx={{ mb: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <Typography>Providers</Typography>
+                <Typography variant='h4' sx={{ mb: 1 }}>
+                    Providers
+                </Typography>
                 <FormControl fullWidth>
                     <Select size='small' value={selectedProvider} onChange={handleProviderChange}>
                         <MenuItem value='none'>None</MenuItem>
