@@ -5,14 +5,37 @@ import * as path from 'path'
 import { JSDOM } from 'jsdom'
 import { z } from 'zod'
 import { DataSource } from 'typeorm'
-import { ICommonObject, IDatabaseEntity, IMessage, INodeData, IVariable, MessageContentImageUrl } from './Interface'
+import { ICommonObject, IDatabaseEntity, IDocument, IMessage, INodeData, IVariable, MessageContentImageUrl } from './Interface'
 import { AES, enc } from 'crypto-js'
+import { omit } from 'lodash'
 import { AIMessage, HumanMessage, BaseMessage } from '@langchain/core/messages'
+import { Document } from '@langchain/core/documents'
 import { getFileFromStorage } from './storageUtils'
+import { GetSecretValueCommand, SecretsManagerClient, SecretsManagerClientConfig } from '@aws-sdk/client-secrets-manager'
+import { customGet } from '../nodes/sequentialagents/commonUtils'
+import { TextSplitter } from 'langchain/text_splitter'
+import { DocumentLoader } from 'langchain/document_loaders/base'
 
 export const numberOrExpressionRegex = '^(\\d+\\.?\\d*|{{.*}})$' //return true if string consists only numbers OR expression {{}}
 export const notEmptyRegex = '(.|\\s)*\\S(.|\\s)*' //return true if string is not empty or blank
 export const FLOWISE_CHATID = 'flowise_chatId'
+
+let secretsManagerClient: SecretsManagerClient | null = null
+const USE_AWS_SECRETS_MANAGER = process.env.SECRETKEY_STORAGE_TYPE === 'aws'
+if (USE_AWS_SECRETS_MANAGER) {
+    const region = process.env.SECRETKEY_AWS_REGION || 'us-east-1' // Default region if not provided
+    const accessKeyId = process.env.SECRETKEY_AWS_ACCESS_KEY
+    const secretAccessKey = process.env.SECRETKEY_AWS_SECRET_KEY
+
+    let credentials: SecretsManagerClientConfig['credentials'] | undefined
+    if (accessKeyId && secretAccessKey) {
+        credentials = {
+            accessKeyId,
+            secretAccessKey
+        }
+    }
+    secretsManagerClient = new SecretsManagerClient({ credentials, region })
+}
 
 /*
  * List of dependencies allowed to be import in @flowiseai/nodevm
@@ -502,10 +525,33 @@ const getEncryptionKey = async (): Promise<string> => {
  * @returns {Promise<ICommonObject>}
  */
 const decryptCredentialData = async (encryptedData: string): Promise<ICommonObject> => {
-    const encryptKey = await getEncryptionKey()
-    const decryptedData = AES.decrypt(encryptedData, encryptKey)
+    let decryptedDataStr: string
+
+    if (USE_AWS_SECRETS_MANAGER && secretsManagerClient) {
+        try {
+            const command = new GetSecretValueCommand({ SecretId: encryptedData })
+            const response = await secretsManagerClient.send(command)
+
+            if (response.SecretString) {
+                const secretObj = JSON.parse(response.SecretString)
+                decryptedDataStr = JSON.stringify(secretObj)
+            } else {
+                throw new Error('Failed to retrieve secret value.')
+            }
+        } catch (error) {
+            console.error(error)
+            throw new Error('Credentials could not be decrypted.')
+        }
+    } else {
+        // Fallback to existing code
+        const encryptKey = await getEncryptionKey()
+        const decryptedData = AES.decrypt(encryptedData, encryptKey)
+        decryptedDataStr = decryptedData.toString(enc.Utf8)
+    }
+
+    if (!decryptedDataStr) return {}
     try {
-        return JSON.parse(decryptedData.toString(enc.Utf8))
+        return JSON.parse(decryptedDataStr)
     } catch (e) {
         console.error(e)
         throw new Error('Credentials could not be decrypted.')
@@ -542,8 +588,19 @@ export const getCredentialData = async (selectedCredentialId: string, options: I
     }
 }
 
-export const getCredentialParam = (paramName: string, credentialData: ICommonObject, nodeData: INodeData): any => {
-    return (nodeData.inputs as ICommonObject)[paramName] ?? credentialData[paramName] ?? undefined
+/**
+ * Get first non falsy value
+ *
+ * @param {...any} values
+ *
+ * @returns {any|undefined}
+ */
+export const defaultChain = (...values: any[]): any | undefined => {
+    return values.filter(Boolean)[0]
+}
+
+export const getCredentialParam = (paramName: string, credentialData: ICommonObject, nodeData: INodeData, defaultValue?: any): any => {
+    return (nodeData.inputs as ICommonObject)[paramName] ?? credentialData[paramName] ?? defaultValue ?? undefined
 }
 
 // reference https://www.freeformatter.com/json-escape.html
@@ -609,10 +666,11 @@ export const mapChatMessageToBaseMessage = async (chatmessages: any[] = []): Pro
         if (message.role === 'apiMessage' || message.type === 'apiMessage') {
             chatHistory.push(new AIMessage(message.content || ''))
         } else if (message.role === 'userMessage' || message.role === 'userMessage') {
-            // check for image uploads
+            // check for image/files uploads
             if (message.fileUploads) {
                 // example: [{"type":"stored-file","name":"0_DiXc4ZklSTo3M8J4.jpg","mime":"image/jpeg"}]
                 try {
+                    let messageWithFileUploads = ''
                     const uploads = JSON.parse(message.fileUploads)
                     const imageContents: MessageContentImageUrl[] = []
                     for (const upload of uploads) {
@@ -634,14 +692,32 @@ export const mapChatMessageToBaseMessage = async (chatmessages: any[] = []): Pro
                                     url: upload.data
                                 }
                             })
+                        } else if (upload.type === 'stored-file:full') {
+                            const fileLoaderNodeModule = await import('../nodes/documentloaders/File/File')
+                            // @ts-ignore
+                            const fileLoaderNodeInstance = new fileLoaderNodeModule.nodeClass()
+                            const options = {
+                                retrieveAttachmentChatId: true,
+                                chatflowid: message.chatflowid,
+                                chatId: message.chatId
+                            }
+                            const nodeData = {
+                                inputs: {
+                                    txtFile: `FILE-STORAGE::${JSON.stringify([upload.name])}`
+                                }
+                            }
+                            const documents: IDocument[] = await fileLoaderNodeInstance.init(nodeData, '', options)
+                            const pageContents = documents.map((doc) => doc.pageContent).join('\n')
+                            messageWithFileUploads += `<doc name='${upload.name}'>${pageContents}</doc>\n\n`
                         }
                     }
+                    const messageContent = messageWithFileUploads ? `${messageWithFileUploads}\n\n${message.content}` : message.content
                     chatHistory.push(
                         new HumanMessage({
                             content: [
                                 {
                                     type: 'text',
-                                    text: message.content
+                                    text: messageContent
                                 },
                                 ...imageContents
                             ]
@@ -968,4 +1044,105 @@ export const mapMimeTypeToExt = (mimeType: string) => {
 // remove invalid markdown image pattern: ![<some-string>](<some-string>)
 export const removeInvalidImageMarkdown = (output: string): string => {
     return typeof output === 'string' ? output.replace(/!\[.*?\]\((?!https?:\/\/).*?\)/g, '') : output
+}
+
+/**
+ * Extract output from array
+ * @param {any} output
+ * @returns {string}
+ */
+export const extractOutputFromArray = (output: any): string => {
+    if (Array.isArray(output)) {
+        return output.map((o) => o.text).join('\n')
+    } else if (typeof output === 'object') {
+        if (output.text) return output.text
+        else return JSON.stringify(output)
+    }
+    return output
+}
+
+/**
+ * Loop through the object and replace the key with the value
+ * @param {any} obj
+ * @param {any} sourceObj
+ * @returns {any}
+ */
+export const resolveFlowObjValue = (obj: any, sourceObj: any): any => {
+    if (typeof obj === 'object' && obj !== null) {
+        const resolved: any = Array.isArray(obj) ? [] : {}
+        for (const key in obj) {
+            const value = obj[key]
+            resolved[key] = resolveFlowObjValue(value, sourceObj)
+        }
+        return resolved
+    } else if (typeof obj === 'string' && obj.startsWith('$flow')) {
+        return customGet(sourceObj, obj)
+    } else {
+        return obj
+    }
+}
+
+export const handleDocumentLoaderOutput = (docs: Document[], output: string) => {
+    if (output === 'document') {
+        return docs
+    } else {
+        let finaltext = ''
+        for (const doc of docs) {
+            finaltext += `${doc.pageContent}\n`
+        }
+        return handleEscapeCharacters(finaltext, false)
+    }
+}
+
+export const parseDocumentLoaderMetadata = (metadata: object | string): object => {
+    if (!metadata) return {}
+
+    if (typeof metadata !== 'object') {
+        return JSON.parse(metadata)
+    }
+
+    return metadata
+}
+
+export const handleDocumentLoaderMetadata = (
+    docs: Document[],
+    _omitMetadataKeys: string,
+    metadata: object | string = {},
+    sourceIdKey?: string
+) => {
+    let omitMetadataKeys: string[] = []
+    if (_omitMetadataKeys) {
+        omitMetadataKeys = _omitMetadataKeys.split(',').map((key) => key.trim())
+    }
+
+    metadata = parseDocumentLoaderMetadata(metadata)
+
+    return docs.map((doc) => ({
+        ...doc,
+        metadata:
+            _omitMetadataKeys === '*'
+                ? metadata
+                : omit(
+                      {
+                          ...metadata,
+                          ...doc.metadata,
+                          ...(sourceIdKey ? { [sourceIdKey]: doc.metadata[sourceIdKey] || sourceIdKey } : undefined)
+                      },
+                      omitMetadataKeys
+                  )
+    }))
+}
+
+export const handleDocumentLoaderDocuments = async (loader: DocumentLoader, textSplitter?: TextSplitter) => {
+    let docs: Document[] = []
+
+    if (textSplitter) {
+        let splittedDocs = await loader.load()
+        splittedDocs = await textSplitter.splitDocuments(splittedDocs)
+        docs = splittedDocs
+    } else {
+        docs = await loader.load()
+    }
+
+    return docs
 }
