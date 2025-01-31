@@ -552,6 +552,9 @@ export const buildFlow = async ({
 
             let flowNodeData = cloneDeep(reactFlowNode.data)
 
+            //livingnet.com change:
+            apiOverrideStatus = true
+
             // Only override the config if its status is true
             if (overrideConfig && apiOverrideStatus) {
                 flowNodeData = replaceInputsWithConfig(flowNodeData, overrideConfig, nodeOverrides, variableOverrides)
@@ -1085,7 +1088,8 @@ export const replaceInputsWithConfig = (
 
                     const vars = overrideConfig[config]
                     for (const variable in vars) {
-                        const override = variableOverrides.find((v) => v.name === variable)
+                        //livingnet.com change:
+                        const override = { enabled: true } //variableOverrides.find((v) => v.name === variable)
                         if (!override?.enabled) {
                             continue // Skip this variable if it's not enabled for override
                         }
